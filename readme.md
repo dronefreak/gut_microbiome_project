@@ -58,11 +58,12 @@ To set up the project environment and begin contributing:
     # Or using uv (if installed)
     uv sync
     ```
-3.  **Run the training script:**
-    ```bash
-    python train.py
-    ```
-    *(Note: Ensure you have configured your data paths in the relevant configuration files before running.)*
+3.  **Download the Microbiome Transformer checkpoint:**
+    
+    The pre-trained Microbiome Transformer model checkpoint can be downloaded from Figshare:
+    
+    [Model and Data for diabimmune example](https://figshare.com/articles/dataset/Model_and_Data_for_diabimmune_example/30429055?file=58993825)
+    
 
 ## 🤝 Contributing
 
