@@ -74,4 +74,6 @@ Please refer to our dedicated **[Contributing Guide](https://github.com/AI-For-F
 *   The current development roadmap and open issues.
 *   Guidelines for submitting pull requests and writing clean code.
 
+**Want to be assigned to an issue?** Join the [huggingscience Discord server](https://discord.com/invite/VYkdEVjJ5J) and communicate your interest in the relevant channel!
+
 Thank you for helping us advance the prediction of food allergies!
