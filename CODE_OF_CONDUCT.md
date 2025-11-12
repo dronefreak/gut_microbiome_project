@@ -38,7 +38,7 @@ This applies everywhere in our project space:
 
 If you experience or witness unacceptable behavior:
 
-1. **Discord**: Contact a moderator or admin on the [huggingscience Discord server](https://discord.com/invite/VYkdEVjJ5J)
+1. **Discord**: Contact a moderator or admin on the [huggingscience Discord server](https://discord.com/invite/VYkdEVjJ5J) tagging @AI for Allergies Team Leader.
 2. **GitHub**: Report via the repository's "Report" feature or contact maintainers directly
 3. **Email**: [Include maintainer contact if available]
 
