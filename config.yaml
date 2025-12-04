@@ -18,7 +18,7 @@ data:
   # ProkBERT model name
   embedding_model: "neuralbioinfo/prokbert-mini-long"
   batch_size_embedding: 6
-  device: "mps"  # cpu, cuda, or mps
+  device: "cpu"  # cpu, cuda, or mps
   # ... other data args
 
 # model
