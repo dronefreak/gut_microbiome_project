@@ -142,29 +142,58 @@ See `config.yaml` for all available options including hyperparameter grids.
 
 ### Step 1: Generate Embeddings
 
-The pipeline can generate embeddings automatically or you can pre-generate them.
+The pipeline can generate embeddings automatically or you can pre-generate them for better control and performance.
 
-#### Option A: Automatic Generation (Recommended)
+#### Option A: Automatic Generation (Quick Start)
 
 When you run `main.py`, the pipeline automatically generates any missing embeddings. The first run will be slow, but subsequent runs use cached embeddings.
 
-#### Option B: Pre-generate Embeddings
+```bash
+python main.py
+```
 
-Use the standalone script to generate embeddings for multiple datasets:
+#### Option B: Pre-generate Embeddings (Recommended)
+
+For more control and to process multiple datasets efficiently, use the standalone embedding generation script.
+
+**1. Activate your environment:**
+
+```bash
+# Using uv (recommended)
+source .venv/bin/activate
+
+# Or if using pip
+source venv/bin/activate
+```
+
+**2. Configure the script:**
+
+Edit `generate_embeddings.py` and update the dataset path:
 
 ```python
-# Edit generate_embeddings.py to set your paths
+# Lines near the bottom of generate_embeddings.py
 BASE_OUTPUT_DIR = Path("data_preprocessing")
-DATASET_DIR = Path("data_preprocessing/datasets/diabimmune")
+DATASET_DIR = Path("data_preprocessing/datasets/diabimmune")  # Change this!
+```
 
-# Run the script
+**3. Run the script:**
+
+```bash
 python generate_embeddings.py
 ```
 
-This generates:
+**What gets generated:**
+
 1. **DNA sequences** (`dna_sequences/`) - CSV files with OTU DNA sequences per sample
 2. **DNA embeddings** (`dna_embeddings/`) - ProkBERT embeddings per OTU (H5 format)
 3. **Microbiome embeddings** (`microbiome_embeddings/`) - Aggregated embeddings per sample (H5 format)
+
+**Important Notes:**
+
+- ⏸️ **Resume capability**: You can safely interrupt (Ctrl+C) and restart. Already generated files are kept.
+- ⚠️ **Incomplete files**: If interrupted during embedding generation (while processing samples), delete the incomplete `.h5` file before restarting.
+- 💡 **Performance tip**: Use GPU by setting `DEVICE = "cuda"` (or `"mps"` for Apple Silicon) in `generate_embeddings.py` for 5-10x speedup.
+- 📖 **Detailed guide**: See `README_EMBEDDINGS.md` for complete instructions, troubleshooting, and file structure details.
 
 ### Step 2: Train and Evaluate
 
