@@ -79,3 +79,9 @@ valid_filenames:
   - "Diabimmune"
   - "Goldberg"
   - "Gadir"
+tracking:
+  enabled: true
+  project: "gut-microbiome"
+  run_name: null
+  tags: ["gridsearch", "unbiased-cv"]
+  space_id: null # e.g. "username/space-name" for Trackio Hugging Face Spaces integration

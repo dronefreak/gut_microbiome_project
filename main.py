@@ -7,6 +7,7 @@ from data_loading import load_dataset_df
 from modules.classifier import SKClassifier
 from utils.evaluation_utils import ResultsManager, EvaluationResult
 from utils.data_utils import load_config, prepare_data
+from utils.tracking_utils import get_tracker, safe_log
 
 
 def run_evaluation(config: dict, classifiers: list = None):
@@ -19,11 +20,22 @@ def run_evaluation(config: dict, classifiers: list = None):
                     If None, uses classifier from config.
                     Options: ["logreg", "rf", "svm", "mlp"]
     """
+    # (ADDED) tracker
+    tracker = get_tracker(config)
+
     # Load and prepare data
     print("Loading dataset...")
     dataset_df = load_dataset_df(config)
     X, y = prepare_data(dataset_df)
     print(f"Dataset loaded: {X.shape[0]} samples, {X.shape[1]} features")
+
+    # (ADDED) basic run metadata
+    safe_log(tracker, {
+        "pipeline": "evaluation",
+        "data/n_samples": int(X.shape[0]),
+        "data/n_features": int(X.shape[1]),
+        "data/dataset_path": str(config.get('data', {}).get('dataset_path', '')),
+    })
 
     # Get unique class labels for reporting
     unique_labels = sorted(set(y))
@@ -43,6 +55,12 @@ def run_evaluation(config: dict, classifiers: list = None):
     # Cross-validation folds
     cv_folds = config.get("evaluation", {}).get("cv_folds", 5)
 
+    # (ADDED) evaluation settings
+    safe_log(tracker, {
+        "evaluation/cv_folds": cv_folds,
+        "run/n_classifiers": len(classifiers),
+    })
+
     # Run evaluation for each classifier
     for clf_type in classifiers:
         print(f"\n{'=' * 60}")
@@ -54,6 +72,15 @@ def run_evaluation(config: dict, classifiers: list = None):
 
         # Run evaluation
         metrics = classifier.evaluate_model(X, y, cv=cv_folds)
+
+        # (ADDED) log per-classifier metrics (safe scalar fields only)
+        safe_log(tracker, {
+            "classifier/type": clf_type,
+            "classifier/name": getattr(metrics, "classifier_name", None),
+            "metrics/roc_auc": getattr(metrics, "roc_auc", None),
+            "metrics/cv_folds": getattr(metrics, "cv_folds", None),
+            "best_params": getattr(metrics, "best_params", None),
+        })
 
         # Convert to EvaluationResult for storage
         eval_result = EvaluationResult(
@@ -78,6 +105,14 @@ def run_evaluation(config: dict, classifiers: list = None):
     print(f"\n{'=' * 60}")
     print(f"All results saved to: {results_manager.output_dir}")
     print(f"{'=' * 60}")
+
+    # (ADDED) log artifacts/outputs + finish tracker
+    safe_log(tracker, {
+        "results/output_dir": str(results_manager.output_dir),
+        "run/status": "completed",
+    })
+    if tracker is not None:
+        tracker.finish()
 
     return results_manager
 
@@ -107,11 +142,22 @@ def run_grid_search_experiment(
     Returns:
         ResultsManager with all results
     """
+    # tracker
+    tracker = get_tracker(config)
+
     # Load and prepare data
     print("Loading dataset...")
     dataset_df = load_dataset_df(config)
     X, y = prepare_data(dataset_df)
     print(f"Dataset loaded: {X.shape[0]} samples, {X.shape[1]} features")
+
+    # (ADDED) basic run metadata
+    safe_log(tracker, {
+        "pipeline": "grid_search_with_final_eval",
+        "data/n_samples": int(X.shape[0]),
+        "data/n_features": int(X.shape[1]),
+        "data/dataset_path": str(config.get('data', {}).get('dataset_path', '')),
+    })
 
     # Get unique class labels for reporting
     unique_labels = sorted(set(y))
@@ -158,13 +204,23 @@ def run_grid_search_experiment(
     grid_search_random_state = eval_config.get("grid_search_random_state", 42)
     final_eval_random_state = eval_config.get("final_eval_random_state", 123)
 
+    # (ADDED) evaluation settings
+    safe_log(tracker, {
+        "evaluation/grid_search_cv_folds": grid_search_cv,
+        "evaluation/final_eval_cv_folds": final_eval_cv,
+        "evaluation/scoring": scoring,
+        "evaluation/grid_search_random_state": grid_search_random_state,
+        "evaluation/final_eval_random_state": final_eval_random_state,
+        "run/n_classifiers": len(valid_classifiers),
+    })
+
     # Store best params for summary
     best_params_summary = {}
 
     # Run grid search + final eval for each classifier
     for clf_type in valid_classifiers:
         param_grid = param_grids[clf_type]
-
+        
         # Initialize classifier
         classifier = SKClassifier(clf_type, config)
 
@@ -182,6 +238,15 @@ def run_grid_search_experiment(
         )
 
         best_params_summary[clf_type] = metrics.best_params
+
+        # (ADDED) log best score (from grid search) + final unbiased roc_auc
+        safe_log(tracker, {
+            "classifier/name": getattr(metrics, "classifier_name", None),
+            "best_params": getattr(metrics, "best_params", None),
+            "metrics/grid_search_best_score": getattr(metrics, "best_score", None),
+            "metrics/final_roc_auc": getattr(metrics, "roc_auc", None),
+            "metrics/cv_folds": getattr(metrics, "cv_folds", None),
+        })
 
         # Convert to EvaluationResult for storage
         eval_result = EvaluationResult(
@@ -216,6 +281,15 @@ def run_grid_search_experiment(
     print("\nBest Parameters Summary:")
     for clf_type, params in best_params_summary.items():
         print(f"  {clf_type}: {params}")
+
+    # (ADDED) outputs + finish tracker
+    safe_log(tracker, {
+        "results/output_dir": str(results_manager.output_dir),
+        "results/best_params_summary_path": str(results_manager.output_dir / "best_params_summary.json"),
+        "run/status": "completed",
+    })
+    if tracker is not None:
+        tracker.finish()
 
     return results_manager
 
