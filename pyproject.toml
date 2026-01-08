@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["modules", "evaluation"]
+packages = ["modules", "utils"]
 
 [dependency-groups]
 dev = [
