@@ -6,7 +6,7 @@ data:
   srs_to_otu_parquet: "data_preprocessing/mapref_data/samples-otus-97.parquet"
   otu_to_dna_parquet: "data_preprocessing/mapref_data/otus_97_to_dna.parquet"
   # Dataset path
-  dataset_path: "data_preprocessing/datasets/diabimmune/Month_9.csv" # path to preprocessed data
+  dataset_path: "data_preprocessing/datasets/goldberg/all_groups.csv" # path to preprocessed data
   # Embeddings paths
   dna_csv_dir: "data_preprocessing/dna_sequences"
   dna_embeddings_dir: "data_preprocessing/dna_embeddings"
