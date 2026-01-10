@@ -286,11 +286,33 @@ model.load_state_dict(torch.load(checkpoint_path, weights_only=True))
 - `example_scripts/utils.py:42-49`
 - `example_scripts/prepping_code.py:122-128`
 
-**Fix:** Create `modules/constants.py` with:
+**⭐ Fix (using Hydra config per maintainer preference):**
+Add to `config.yaml` under model section:
+```yaml
+model:
+  checkpoint: "data/checkpoint..."
+  embedding_dim: 512
+  hidden_dim: 256
+  output_classes: 2
+  # Other model-specific settings
+```
+
+**Alternative:** Create separate `config/model.yaml` for better organization:
+```yaml
+# config/model.yaml
+embedding_dim: 512
+hidden_dim: 256
+output_classes: 2
+num_layers: 4
+dropout: 0.1
+```
+
+Then access via Hydra dot notation:
 ```python
-EMBEDDING_DIM = 512
-HIDDEN_DIM = 256
-OUTPUT_CLASSES = 2
+@hydra.main(version_base=None, config_path=".", config_name="config")
+def main(cfg: DictConfig) -> None:
+    embedding_dim = cfg.model.embedding_dim  # Clean!
+    hidden_dim = cfg.model.hidden_dim
 ```
 
 #### Duplicate #3: CSV Parsing Logic (2x)
@@ -489,7 +511,7 @@ tests/
 - ❌ **Improper Hydra usage** - Dictionary access instead of dot notation (see Section 4.4)
 - ❌ No config validation (no schema checking)
 - ❌ No environment variable support (`os.getenv()` fallbacks missing)
-- ❌ Magic numbers scattered throughout code
+- ❌ **Magic numbers scattered throughout code** - Should be in Hydra config (embedding_dim=512, hidden_dim=256, batch_size=8, etc.)
 - ❌ No validation that required config keys exist
 
 **⭐ REQUIRED: Proper Hydra/OmegaConf configuration:**
@@ -509,8 +531,11 @@ class DataConfig:
 @dataclass
 class ModelConfig:
     checkpoint: str = MISSING
-    embedding_dim: int = 512
-    hidden_dim: int = 256
+    embedding_dim: int = 512  # Replaces hardcoded constant
+    hidden_dim: int = 256      # Replaces hardcoded constant
+    output_classes: int = 2    # Replaces hardcoded constant
+    num_layers: int = 4
+    dropout: float = 0.1
 
 @dataclass
 class MicrobiomeConfig:
@@ -533,12 +558,18 @@ def main(cfg: DictConfig) -> None:
     checkpoint = cfg.model.checkpoint
     batch_size = cfg.data.batch_size
 
+    # ✅ Access model constants (no more hardcoded values!)
+    embedding_dim = cfg.model.embedding_dim
+    hidden_dim = cfg.model.hidden_dim
+    output_classes = cfg.model.output_classes
+
     # ✅ With validation
     if not dataset_path.exists():
         raise ValueError(f"Dataset path {dataset_path} does not exist")
 
     # ✅ Override from CLI
     # python main.py data.batch_size=64 model.checkpoint=/path/to/ckpt
+    # python main.py model.embedding_dim=1024 model.hidden_dim=512
 ```
 
 **Optional: Additional validation with Pydantic (for complex validation):**
@@ -657,25 +688,26 @@ data_loading/
 - Hydra config refactor: ~6-10 hours (multiple config access points)
 
 ### Phase 2: Code Quality (Week 2-3)
-9. ✅ Remove code duplication (centralize load_config, constants)
-10. ✅ Add comprehensive type hints
-11. ✅ Fix broad exception handlers
-12. ✅ Split `data_loading.py` into modules
-13. ✅ Add input validation for file paths
+9. ✅ Remove code duplication (centralize load_config)
+10. ✅ Move all hardcoded constants to Hydra config (embedding_dim, hidden_dim, output_classes, etc.)
+11. ✅ Add comprehensive type hints
+12. ✅ Fix broad exception handlers
+13. ✅ Split `data_loading.py` into modules
+14. ✅ Add input validation for file paths
 
 ### Phase 3: Testing & Documentation (Week 4-5)
-14. ✅ Create test infrastructure with pytest
-15. ✅ Write unit tests for critical functions
-16. ✅ Add integration tests for pipelines
-17. ✅ Add missing docstrings
-18. ✅ Create API documentation with Sphinx
+15. ✅ Create test infrastructure with pytest
+16. ✅ Write unit tests for critical functions
+17. ✅ Add integration tests for pipelines
+18. ✅ Add missing docstrings
+19. ✅ Create API documentation with Sphinx
 
 ### Phase 4: Performance & Features (Week 6+)
-19. ✅ Optimize parquet reading (batch loading everywhere)
-20. ✅ Add pagination for large H5 files
-21. ✅ Add rich progress bars for long-running operations
-22. ✅ Add reproducibility features (seed setting, versioning)
-23. ✅ Create CI/CD pipeline
+20. ✅ Optimize parquet reading (batch loading everywhere)
+21. ✅ Add pagination for large H5 files
+22. ✅ Add rich progress bars for long-running operations
+23. ✅ Add reproducibility features (seed setting, versioning)
+24. ✅ Create CI/CD pipeline
 
 ---
 
