@@ -1144,12 +1144,6 @@ def download_dataset_from_hf(
     dataset_repo_url = f"{base_repo_url}/AI4FA-{str(dataset_name)}"
 
     csv_filename = config["csv_filename"]
-    if csv_filename not in valid_filenames[dataset_name]:
-        raise ValueError(
-            f"CSV filename '{csv_filename}' does not match expected filename(s) "
-            f"{valid_filenames[dataset_name]} for dataset '{dataset_name}'"
-        )
-
     csv_folder = config["csv_filename"].split(".")[0]
 
     # Ensure Git LFS is installed
@@ -1182,6 +1176,13 @@ def download_dataset_from_hf(
     print(f"Dataset ready at {download_cache_dir}")
 
     dataset_path = download_cache_dir / "metadata" / csv_filename
+    if not dataset_path.exists():
+        print("Available files in metadata directory:")
+        for f in (download_cache_dir / "metadata").iterdir():
+            print(f"  {f}")
+        raise FileNotFoundError(
+            f"Dataset CSV file not found at expected path: {dataset_path}"
+        )
     sequences_dir = download_cache_dir / "processed" / "dna_sequences" / csv_folder
     dna_embeddings_dir = (
         download_cache_dir / "processed" / "dna_embeddings" / csv_folder
