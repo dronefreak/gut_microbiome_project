@@ -87,36 +87,7 @@ You need three types of files to run the pipeline:
 
 #### Option: Download Pre-generated Embeddings (Skip Embedding Pipeline)
 
-If you want to skip the embedding generation process and directly train classifiers, you can download pre-generated embeddings:
-
-**Download Preprocessed Data:**
-- Download from: [Google Drive - Preprocessed Data](https://drive.google.com/drive/folders/1bP98QGr1uXIhb2eZnqk4VcrHEj1su2rL?usp=sharing)
-- Available files:
-  - `diabimmune_data.zip` (4.58 GB)
-  - `gadir_data.zip` (49.5 MB)
-  - `goldberg_data.zip` (142.3 MB)
-  - `tanaka_data.zip` (33.8 MB)
-
-**Setup Instructions:**
-
-1. Download the zip file(s) for the dataset(s) you want to use
-2. Unzip each file - each contains three subfolders:
-   - `dna_sequences/`
-   - `dna_embeddings/`
-   - `microbiome_embeddings/`
-3. Place these subfolders in the corresponding dataset directory:
-
-```bash
-# Example for diabimmune dataset
-unzip diabimmune_data.zip
-
-# Move subfolders to the correct location
-mv diabimmune_data/dna_sequences/* data_preprocessing/dna_sequences/diabimmune/
-mv diabimmune_data/dna_embeddings/* data_preprocessing/dna_embeddings/diabimmune/
-mv diabimmune_data/microbiome_embeddings/* data_preprocessing/microbiome_embeddings/diabimmune/
-
-# Repeat for other datasets (gadir, goldberg, tanaka)
-```
+Just execute `python main.py` as suggested in the lower sections. The script is updated to automatically pull the datasets from HuggingFace and place them in appropriate folders.
 
 **Note:** With preprocessed embeddings, you can skip directly to [Step 2: Train and Evaluate](#step-2-train-and-evaluate) without running the embedding generation pipeline.
 
@@ -154,10 +125,10 @@ Edit `config.yaml` to configure your experiment:
 data:
   # Point to your dataset
   dataset_path: "data_preprocessing/datasets/diabimmune/Month_2.csv"
-  
+
   # Model checkpoint (downloaded above)
   mirobiome_transformer_checkpoint: "data/checkpoint_epoch_0_final_epoch3_conf00.pt"
-  
+
   # Device: "cpu", "cuda", or "mps"
   device: "cpu"
 
@@ -179,9 +150,9 @@ See `config.yaml` for all available options including hyperparameter grids.
 
 The pipeline can generate embeddings automatically or you can pre-generate them for better control and performance.
 
-#### Option A: Automatic Generation (Quick Start)
+#### Option A: Automatic Download (Quick Start)
 
-When you run `main.py`, the pipeline automatically generates any missing embeddings. The first run will be slow, but subsequent runs use cached embeddings.
+When you run `main.py`, the pipeline automatically downloads the embeddings for the selected dataset.
 
 ```bash
 python main.py
@@ -231,6 +202,52 @@ python generate_embeddings.py
 - 📖 **Detailed guide**: See `README_EMBEDDINGS.md` for complete instructions, troubleshooting, and file structure details.
 
 ### Step 2: Train and Evaluate
+
+Since the `main.py` script is now equipped to download automatically the datasets from HuggingFace, here is what you need to know about the config:
+
+```yaml
+# Data path
+data:
+  # Other params like before
+  device: "cpu"  # cpu, cuda, or mps
+  hugging_face:
+    download_path: "huggingface_datasets"
+    dataset_name: "Tanaka" # e.g., "Diabimmune", "Goldberg", "Gadir"
+    base_repo_url: "https://huggingface.co/datasets/hugging-science"
+    pull_from_huggingface: true
+    csv_filename: "month_2.csv" # e.g., "Month_2.csv" for Diabimmune, "T1.csv" for Goldberg, "gadir_all_months.csv" for Gadir
+
+```
+- `download_path` - Folder where the datasets will be downloaded.
+- `dataset_name` - Dataset name you wish to pull from HF.
+- `base_repo_url` - Base repo for the uploaded datasets.
+- `pull_from_huggingface` - Whether you wish to use local files or pull from HF (recommended to pull from HF)
+- `csv_filename` - The CSV you wish to work with. Please note that HF pull will download the entire dataset at once.
+
+If the datasets are pulled once, they are skipped the next time. You can change the `csv_filename` if you wish to work with other months.
+Once the datasets are pulled from HuggingFace, they should look like below:
+
+```bash
+./huggingface_datasets/
+├── Diabimmune
+│   ├── metadata
+│   ├── processed
+│   └── README.md
+├── Gadir
+│   ├── metadata
+│   ├── processed
+│   └── README.md
+├── Goldberg
+│   ├── metadata
+│   ├── processed
+│   └── README.md
+└── Tanaka
+    ├── metadata
+    ├── processed
+    └── README.md
+```
+- `metadata/` - Folder contains the labels CSV files.
+- `processed/` - Folder contains the `dna_embeddings`, `dna_sequences` and `microbiome_embeddings` as usual.
 
 Run the main pipeline using `main.py`. There are several modes available:
 
@@ -287,7 +304,7 @@ run_grid_search_experiment(config, custom_param_grids=custom_grids)
 ### Step 3: View Results
 
 Results are saved to `eval_results/<dataset_name>/<timestamp>/`:
-
+Dataset names are automatically infered from the HF pull config setup.
 ```text
 eval_results/
 └── diabimmune/
