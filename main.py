@@ -31,8 +31,8 @@ def run_evaluation(config: dict, classifiers: list = None):
 
     # Initialize ResultsManager
     results_manager = ResultsManager(
-        results_output_dir=config["evaluation"]["results_output_dir"],
-        dataset_path=config["data"]["dataset_path"],
+
+        config=config,
         class_names=class_names,
     )
 
@@ -234,15 +234,15 @@ if __name__ == "__main__":
     config = load_config()
 
     # ===== OPTION 1: Simple evaluation (no hyperparameter tuning) =====
-    # run_evaluation(config)
+    run_evaluation(config)
 
     # ===== OPTION 2: Simple evaluation with multiple classifiers =====
-    # run_evaluation(config, classifiers=["logreg", "rf", "svm", "mlp"])
+    #run_evaluation(config, classifiers=["logreg", "rf", "svm", "mlp"])
 
     # ===== OPTION 3: Grid search with unbiased final evaluation =====
     # This is the recommended approach when you can't have a held-out test set.
     # It finds best hyperparameters, then evaluates on fresh CV splits.
-    run_grid_search_experiment(config, classifiers=["logreg", "rf", "svm", "mlp"])
+    # run_grid_search_experiment(config, classifiers=["logreg", "rf", "svm", "mlp"])
 
     # ===== OPTION 4: Grid search for specific classifiers =====
     # run_grid_search_experiment(config, classifiers=["logreg", "mlp"])
